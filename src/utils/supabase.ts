@@ -7,21 +7,29 @@ const supabase = createClient(
 );
 
 export async function uploadImageToSupabase(file: File): Promise<string> {
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}-${file.name}`;
-  const filePath = `rewards/${fileName}`;
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please upload an image file");
+  }
+
+  const timestamp = new Date().getTime();
+  const fileName = `${timestamp}-${file.name.replace(/\s+/g, '_')}`;
 
   const { data, error } = await supabase.storage
-    .from('uploads')
-    .upload(filePath, file);
+    .from('zada-ai-s3')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type,
+    });
 
   if (error) {
+    console.error("Failed to upload image:", error.message);
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 
-  // Get the public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('uploads')
-    .getPublicUrl(filePath);
-
-  return publicUrl;
+  // Return the correct public URL format
+  const imageUrl = `https://storage-supabase.hnxdau.easypanel.host/storage/v1/object/public/zada-ai-s3/${fileName}`;
+  console.log("Image uploaded successfully:", imageUrl);
+  
+  return imageUrl;
 }

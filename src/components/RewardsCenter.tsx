@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { UploadModal } from './UploadModal';
 import { RewardsSummary } from './RewardsSummary';
 import { useRewards } from '@/hooks/useRewards';
 import { checkLoginStatus, openAuthPopup, logout } from '@/utils/auth';
-import { verifyFacebookFollow, verifyInstagramFollow, verifyTikTokFollow } from '@/services/rewardsApi';
+import { verifyFacebookFollow, verifyInstagramFollow, verifyTikTokFollow, checkUserFollowStatus } from '@/services/rewardsApi';
 import { uploadImageToSupabase } from '@/utils/supabase';
 import { User, LogOut } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export function RewardsCenter() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'instagram' | 'tiktok' | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   
   const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed } = useRewards();
   const { toast } = useToast();
@@ -29,6 +31,12 @@ export function RewardsCenter() {
   useEffect(() => {
     checkUserLoginStatus();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      checkFollowStatus();
+    }
+  }, [user]);
 
   const checkUserLoginStatus = async () => {
     setIsAuthLoading(true);
@@ -39,6 +47,31 @@ export function RewardsCenter() {
       console.error('Error checking login status:', error);
     } finally {
       setIsAuthLoading(false);
+    }
+  };
+
+  const checkFollowStatus = async () => {
+    if (!user) return;
+    
+    setIsCheckingStatus(true);
+    try {
+      const statusResponse = await checkUserFollowStatus(10); // You would get this from your user object
+      
+      // Check if user has already followed/liked any platforms
+      if (statusResponse.facebook_page === 'liked' && !rewardStatus.facebook) {
+        markRewardClaimed('facebook');
+      }
+      if (statusResponse.instagram_page === 'followed' && !rewardStatus.instagram) {
+        markRewardClaimed('instagram');
+      }
+      if (statusResponse.tiktok_page === 'followed' && !rewardStatus.tiktok) {
+        markRewardClaimed('tiktok');
+      }
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+      // Don't show error toast for status check as it's not critical
+    } finally {
+      setIsCheckingStatus(false);
     }
   };
 
@@ -99,6 +132,7 @@ export function RewardsCenter() {
     try {
       // Upload image to Supabase and get the URL
       const imageUrl = await uploadImageToSupabase(file);
+      console.log("Uploaded image URL:", imageUrl);
       
       const requestData = {
         user_id: 10, // You would get this from your user object
@@ -140,7 +174,7 @@ export function RewardsCenter() {
       console.error('Verification failed:', error);
       toast({
         title: 'Error',
-        description: 'Something went wrong. Please try again.',
+        description: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -213,7 +247,12 @@ export function RewardsCenter() {
 
         {/* Social Platform Cards */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Available Rewards</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">Available Rewards</h2>
+            {isCheckingStatus && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            )}
+          </div>
           
           <div className="grid gap-6">
             <SocialPlatformCard
