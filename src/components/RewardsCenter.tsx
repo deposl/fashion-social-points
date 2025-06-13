@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { RewardsSummary } from './RewardsSummary';
 import { useRewards } from '@/hooks/useRewards';
 import { checkLoginStatus, openAuthPopup, logout } from '@/utils/auth';
 import { verifyFacebookFollow, verifyInstagramFollow, verifyTikTokFollow } from '@/services/rewardsApi';
+import { uploadImageToSupabase } from '@/utils/supabase';
 import { User, LogOut } from 'lucide-react';
 
 interface User {
@@ -97,9 +97,8 @@ export function RewardsCenter() {
 
     setIsLoading(true);
     try {
-      // For demo purposes, we'll use a placeholder image URL
-      // In a real app, you'd upload the file to your server first
-      const imageUrl = "https://cdn.zada.lk/uploads/all/placeholder.webp";
+      // Upload image to Supabase and get the URL
+      const imageUrl = await uploadImageToSupabase(file);
       
       const requestData = {
         user_id: 10, // You would get this from your user object
