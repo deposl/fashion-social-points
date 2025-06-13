@@ -19,8 +19,9 @@ export function openAuthPopup(): Promise<{name: string, email: string} | null> {
     console.log('Token:', token);
     console.log('Current domain:', currentDomain);
     
-    // Include the callback domain in the auth URL
-    const authUrl = `https://www.zada.lk/auth-login?token=${token}&callback_domain=${encodeURIComponent(currentDomain)}`; 
+    // Include the callback domain and callback URL in the auth URL
+    const callbackUrl = `${currentDomain}/auth-callback`;
+    const authUrl = `https://www.zada.lk/auth-login?token=${token}&callback_domain=${encodeURIComponent(currentDomain)}&callback_url=${encodeURIComponent(callbackUrl)}`; 
     console.log('URL:', authUrl);
 
     const width = 600;
