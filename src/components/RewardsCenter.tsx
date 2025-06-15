@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,6 +20,7 @@ import { User } from 'lucide-react';
 import { PhoneVerificationModal } from './PhoneVerificationModal';
 import { checkUserPhone } from '@/services/phoneApi';
 import { ProductReviewCard } from './ProductReviewCard';
+import { AffiliateCommissionCard } from './AffiliateCommissionCard';
 
 interface User {
   name: string;
@@ -343,6 +343,8 @@ export function RewardsCenter() {
             />
 
             <ProductReviewCard />
+            
+            <AffiliateCommissionCard />
           </div>
         </div>
 

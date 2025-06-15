@@ -1,0 +1,45 @@
+
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ExternalLink, Share2, Percent } from 'lucide-react';
+
+export function AffiliateCommissionCard() {
+  const handleVisitProducts = () => {
+    window.open('https://www.zada.lk', '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <div className="bg-white rounded-lg border shadow-sm p-6 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-full text-white bg-purple-600">
+            <Percent className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">Affiliate Commission</h3>
+            <p className="text-sm text-muted-foreground">
+              Earn 5% commission for each sale within 14 days after sharing
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 text-sm text-purple-600">
+          <Share2 className="h-4 w-4" />
+          <span className="font-medium">5% Commission</span>
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleVisitProducts}
+          className="flex items-center gap-1"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Browse Products
+        </Button>
+      </div>
+    </div>
+  );
+}
