@@ -12,6 +12,7 @@ import {
   verifyFacebookFollow, 
   verifyInstagramFollow, 
   verifyTikTokFollow,
+  verifyYouTubeFollow,
   checkUserStatus
 } from '@/services/rewardsApi';
 import { uploadImageToSupabase } from '@/utils/supabase';
@@ -28,7 +29,7 @@ export function RewardsCenter() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'instagram' | 'tiktok' | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'instagram' | 'tiktok' | 'youtube' | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
@@ -164,7 +165,7 @@ export function RewardsCenter() {
     });
   };
 
-  const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok') => {
+  const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube') => {
     if (!user) {
       handleLogin();
       return;
@@ -206,6 +207,9 @@ export function RewardsCenter() {
         case 'tiktok':
           response = await verifyTikTokFollow(requestData);
           break;
+        case 'youtube':
+          response = await verifyYouTubeFollow(requestData);
+          break;
       }
 
       console.log('Verification response:', response);
@@ -213,18 +217,22 @@ export function RewardsCenter() {
       const isSuccess = 
         (selectedPlatform === 'facebook' && response.facebook_page === 'liked') ||
         (selectedPlatform === 'instagram' && response.instagram_page === 'followed') ||
-        (selectedPlatform === 'tiktok' && response.tiktok_page === 'followed');
+        (selectedPlatform === 'tiktok' && response.tiktok_page === 'followed') ||
+        (selectedPlatform === 'youtube' && response.youtube_page === 'followed');
 
       if (isSuccess) {
         markRewardClaimed(selectedPlatform);
+        const actionText = selectedPlatform === 'youtube' ? 'subscribing to' : 'following';
         toast({
           title: 'Congratulations! 🎉',
-          description: `You've earned 25 points (Rs 25) for following our ${selectedPlatform} page!`,
+          description: `You've earned 25 points (Rs 25) for ${actionText} our ${selectedPlatform} ${selectedPlatform === 'youtube' ? 'channel' : 'page'}!`,
         });
       } else {
+        const actionText = selectedPlatform === 'youtube' ? 'subscription' : 'follow';
+        const pageText = selectedPlatform === 'youtube' ? 'channel' : 'page';
         toast({
           title: 'Verification failed',
-          description: `We couldn't verify your ${selectedPlatform} follow. Please make sure you've followed our official page and try again.`,
+          description: `We couldn't verify your ${selectedPlatform} ${actionText}. Please make sure you've ${selectedPlatform === 'youtube' ? 'subscribed to' : 'followed'} our official ${pageText} and try again.`,
           variant: 'destructive',
         });
       }
@@ -322,6 +330,14 @@ export function RewardsCenter() {
               isCompleted={rewardStatus.tiktok}
               onFollowClick={() => handleFollowClick('tiktok')}
               isLoading={isLoading && selectedPlatform === 'tiktok'}
+            />
+
+            <SocialPlatformCard
+              platform="youtube"
+              icon={<span className="font-bold">📺</span>}
+              isCompleted={rewardStatus.youtube}
+              onFollowClick={() => handleFollowClick('youtube')}
+              isLoading={isLoading && selectedPlatform === 'youtube'}
             />
           </div>
         </div>

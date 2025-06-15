@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 export interface RewardHistory {
   id: string;
-  platform: 'facebook' | 'instagram' | 'tiktok';
+  platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube';
   points: number;
   value: number;
   earnedAt: Date;
@@ -13,6 +13,7 @@ export interface RewardStatus {
   facebook: boolean;
   instagram: boolean;
   tiktok: boolean;
+  youtube: boolean;
 }
 
 export function useRewards() {
@@ -20,6 +21,7 @@ export function useRewards() {
     facebook: false,
     instagram: false,
     tiktok: false,
+    youtube: false,
   });
   
   const [rewardHistory, setRewardHistory] = useState<RewardHistory[]>([]);
@@ -30,7 +32,7 @@ export function useRewards() {
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
-    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false };
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false, youtube: false };
     const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
     
     setRewardStatus(currentStatus);
@@ -38,12 +40,12 @@ export function useRewards() {
     setTotalPoints(currentHistory.reduce((total: number, reward: RewardHistory) => total + reward.points, 0));
   };
 
-  const markRewardClaimed = (platform: 'facebook' | 'instagram' | 'tiktok') => {
+  const markRewardClaimed = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube') => {
     // Get fresh data from localStorage first
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
-    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false };
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false, youtube: false };
     const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
 
     // Check if reward is already claimed
@@ -75,17 +77,17 @@ export function useRewards() {
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
-    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false };
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false, youtube: false };
     const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
     
     let statusChanged = false;
     let historyChanged = false;
 
     // Reset status first to ensure clean state
-    const newStatus = { facebook: false, instagram: false, tiktok: false };
+    const newStatus = { facebook: false, instagram: false, tiktok: false, youtube: false };
     
     followedPlatforms.forEach(platform => {
-      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok';
+      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok' | 'youtube';
       
       // Mark as followed
       newStatus[platformKey] = true;
@@ -119,7 +121,7 @@ export function useRewards() {
   };
 
   const resetRewards = () => {
-    setRewardStatus({ facebook: false, instagram: false, tiktok: false });
+    setRewardStatus({ facebook: false, instagram: false, tiktok: false, youtube: false });
     setRewardHistory([]);
     setTotalPoints(0);
     localStorage.removeItem('rewardStatus');
