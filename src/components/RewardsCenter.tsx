@@ -13,9 +13,7 @@ import {
   verifyFacebookFollow, 
   verifyInstagramFollow, 
   verifyTikTokFollow,
-  checkFacebookStatus,
-  checkInstagramStatus,
-  checkTikTokStatus
+  checkUserStatus
 } from '@/services/rewardsApi';
 import { uploadImageToSupabase } from '@/utils/supabase';
 import { User } from 'lucide-react';
@@ -42,7 +40,7 @@ export function RewardsCenter() {
 
   useEffect(() => {
     if (user) {
-      checkAllPlatformStatus();
+      checkUserFollowStatus();
     }
   }, [user]);
 
@@ -58,46 +56,41 @@ export function RewardsCenter() {
     }
   };
 
-  const checkAllPlatformStatus = async () => {
+  const checkUserFollowStatus = async () => {
     if (!user) return;
     
     setIsCheckingStatus(true);
     const userId = 10; // You would get this from your user object
     
     try {
-      // Check each platform individually
-      const [facebookResponse, instagramResponse, tiktokResponse] = await Promise.allSettled([
-        checkFacebookStatus(userId),
-        checkInstagramStatus(userId),
-        checkTikTokStatus(userId)
-      ]);
+      console.log('Checking user follow status...');
+      const statusResponse = await checkUserStatus(userId);
+      console.log('Status response:', statusResponse);
 
-      // Process Facebook status
-      if (facebookResponse.status === 'fulfilled' && 
-          facebookResponse.value.facebook_page === 'liked' && 
-          !rewardStatus.facebook) {
-        markRewardClaimed('facebook');
-        console.log('Facebook reward claimed automatically');
-      }
+      // Reset rewards first to ensure clean state
+      resetRewards();
 
-      // Process Instagram status
-      if (instagramResponse.status === 'fulfilled' && 
-          instagramResponse.value.instagram_page === 'followed' && 
-          !rewardStatus.instagram) {
-        markRewardClaimed('instagram');
-        console.log('Instagram reward claimed automatically');
-      }
-
-      // Process TikTok status
-      if (tiktokResponse.status === 'fulfilled' && 
-          tiktokResponse.value.tiktok_page === 'followed' && 
-          !rewardStatus.tiktok) {
-        markRewardClaimed('tiktok');
-        console.log('TikTok reward claimed automatically');
+      // Check if user has followed/liked any platforms
+      if (statusResponse && statusResponse.length > 0) {
+        statusResponse.forEach((status) => {
+          const actionType = status.action_type?.toLowerCase();
+          console.log('Processing action type:', actionType);
+          
+          if (actionType === 'facebook') {
+            markRewardClaimed('facebook');
+            console.log('Facebook reward claimed automatically');
+          } else if (actionType === 'instagram') {
+            markRewardClaimed('instagram');
+            console.log('Instagram reward claimed automatically');
+          } else if (actionType === 'tiktok') {
+            markRewardClaimed('tiktok');
+            console.log('TikTok reward claimed automatically');
+          }
+        });
       }
 
     } catch (error) {
-      console.error('Error checking platform status:', error);
+      console.error('Error checking user follow status:', error);
       // Don't show error toast for status check as it's not critical
     } finally {
       setIsCheckingStatus(false);
@@ -182,6 +175,8 @@ export function RewardsCenter() {
           response = await verifyTikTokFollow(requestData);
           break;
       }
+
+      console.log('Verification response:', response);
 
       const isSuccess = 
         (selectedPlatform === 'facebook' && response.facebook_page === 'liked') ||
