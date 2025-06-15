@@ -19,7 +19,6 @@ import {
 import { uploadImageToSupabase } from '@/utils/supabase';
 import { User } from 'lucide-react';
 import { PhoneVerificationModal } from './PhoneVerificationModal';
-import { checkUserPhone } from '@/services/phoneApi';
 import { ProductReviewCard } from './ProductReviewCard';
 import { AffiliateCommissionCard } from './AffiliateCommissionCard';
 import { 
