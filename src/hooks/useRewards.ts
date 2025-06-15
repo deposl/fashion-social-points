@@ -69,31 +69,67 @@ export function useRewards() {
     localStorage.setItem('rewardHistory', JSON.stringify(newHistory));
   };
 
-  const setRewardStatusOnly = (platform: 'facebook' | 'instagram' | 'tiktok') => {
-    // Only update status without adding to history (for API status checks)
-    if (rewardStatus[platform]) {
-      return; // Already marked as completed
+  const updateStatusFromAPI = (followedPlatforms: string[]) => {
+    // Only update status, don't add to history - this is for API status checks
+    const currentStatus = { ...rewardStatus };
+    let hasChanges = false;
+
+    followedPlatforms.forEach(platform => {
+      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok';
+      if (!currentStatus[platformKey]) {
+        currentStatus[platformKey] = true;
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      setRewardStatus(currentStatus);
+      localStorage.setItem('rewardStatus', JSON.stringify(currentStatus));
+    }
+  };
+
+  const initializeRewardsFromAPI = (followedPlatforms: string[]) => {
+    // Initialize both status and history for users who already have followed pages
+    const currentStatus = { ...rewardStatus };
+    const currentHistory = [...rewardHistory];
+    let statusChanged = false;
+    let historyChanged = false;
+    let pointsToAdd = 0;
+
+    followedPlatforms.forEach(platform => {
+      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok';
+      
+      // Update status if not already set
+      if (!currentStatus[platformKey]) {
+        currentStatus[platformKey] = true;
+        statusChanged = true;
+
+        // Add to history if not already present
+        const existingReward = currentHistory.find(reward => reward.platform === platformKey);
+        if (!existingReward) {
+          const newReward: RewardHistory = {
+            id: Date.now().toString() + platformKey,
+            platform: platformKey,
+            points: 25,
+            value: 25,
+            earnedAt: new Date(),
+          };
+          currentHistory.push(newReward);
+          pointsToAdd += 25;
+          historyChanged = true;
+        }
+      }
+    });
+
+    if (statusChanged) {
+      setRewardStatus(currentStatus);
+      localStorage.setItem('rewardStatus', JSON.stringify(currentStatus));
     }
 
-    const newStatus = { ...rewardStatus, [platform]: true };
-    setRewardStatus(newStatus);
-    localStorage.setItem('rewardStatus', JSON.stringify(newStatus));
-
-    // Add to history if not already present
-    const existingReward = rewardHistory.find(reward => reward.platform === platform);
-    if (!existingReward) {
-      const newReward: RewardHistory = {
-        id: Date.now().toString(),
-        platform,
-        points: 25,
-        value: 25,
-        earnedAt: new Date(),
-      };
-      
-      const newHistory = [...rewardHistory, newReward];
-      setRewardHistory(newHistory);
-      setTotalPoints(prev => prev + 25);
-      localStorage.setItem('rewardHistory', JSON.stringify(newHistory));
+    if (historyChanged) {
+      setRewardHistory(currentHistory);
+      setTotalPoints(prev => prev + pointsToAdd);
+      localStorage.setItem('rewardHistory', JSON.stringify(currentHistory));
     }
   };
 
@@ -110,7 +146,8 @@ export function useRewards() {
     rewardHistory,
     totalPoints,
     markRewardClaimed,
-    setRewardStatusOnly,
+    updateStatusFromAPI,
+    initializeRewardsFromAPI,
     resetRewards,
   };
 }

@@ -29,8 +29,9 @@ export function RewardsCenter() {
   const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'instagram' | 'tiktok' | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [statusChecked, setStatusChecked] = useState(false);
   
-  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, setRewardStatusOnly, resetRewards } = useRewards();
+  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeRewardsFromAPI, resetRewards } = useRewards();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,10 +39,10 @@ export function RewardsCenter() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && !statusChecked) {
       checkUserFollowStatus();
     }
-  }, [user]);
+  }, [user, statusChecked]);
 
   const checkUserLoginStatus = async () => {
     setIsAuthLoading(true);
@@ -71,30 +72,30 @@ export function RewardsCenter() {
         // Check if response contains empty object
         if (statusResponse.length === 1 && Object.keys(statusResponse[0]).length === 0) {
           console.log('User has not followed any pages');
+          setStatusChecked(true);
           return;
         }
 
-        statusResponse.forEach((status) => {
-          const actionType = status.action_type?.toLowerCase();
-          console.log('Processing action type:', actionType);
-          
-          if (actionType === 'facebook') {
-            setRewardStatusOnly('facebook');
-            console.log('Facebook reward status set');
-          } else if (actionType === 'instagram') {
-            setRewardStatusOnly('instagram');
-            console.log('Instagram reward status set');
-          } else if (actionType === 'tiktok') {
-            setRewardStatusOnly('tiktok');
-            console.log('TikTok reward status set');
-          }
-        });
+        // Extract all followed platforms at once
+        const followedPlatforms = statusResponse
+          .map(status => status.action_type)
+          .filter(actionType => actionType && typeof actionType === 'string');
+
+        console.log('Followed platforms:', followedPlatforms);
+
+        // Initialize rewards for all followed platforms at once
+        if (followedPlatforms.length > 0) {
+          initializeRewardsFromAPI(followedPlatforms);
+        }
       } else {
         console.log('No follow status found for user');
       }
 
+      setStatusChecked(true);
+
     } catch (error) {
       console.error('Error checking user follow status:', error);
+      setStatusChecked(true);
     } finally {
       setIsCheckingStatus(false);
     }
@@ -106,6 +107,7 @@ export function RewardsCenter() {
       const loggedInUser = await openAuthPopup();
       if (loggedInUser) {
         setUser(loggedInUser);
+        setStatusChecked(false); // Reset status check for new user
         toast({
           title: 'Login successful!',
           description: `Welcome ${loggedInUser.name}! You can now earn rewards.`,
@@ -126,6 +128,7 @@ export function RewardsCenter() {
   const handleLogout = () => {
     logout();
     setUser(null);
+    setStatusChecked(false);
     // Reset rewards when user logs out
     resetRewards();
     toast({
