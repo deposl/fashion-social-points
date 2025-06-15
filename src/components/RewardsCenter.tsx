@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,6 +16,8 @@ import {
 } from '@/services/rewardsApi';
 import { uploadImageToSupabase } from '@/utils/supabase';
 import { User } from 'lucide-react';
+import { PhoneVerificationModal } from './PhoneVerificationModal';
+import { checkUserPhone } from '@/services/phoneApi';
 
 interface User {
   name: string;
@@ -30,6 +31,7 @@ export function RewardsCenter() {
   const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'instagram' | 'tiktok' | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   
   const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeFromAPI, resetRewards, loadRewardData } = useRewards();
   const { toast } = useToast();
@@ -43,6 +45,7 @@ export function RewardsCenter() {
     if (user) {
       // Always check fresh status when user is available
       checkUserFollowStatus();
+      checkUserPhoneStatus();
     } else {
       // Load local data when no user
       loadRewardData();
@@ -106,6 +109,24 @@ export function RewardsCenter() {
       loadRewardData();
     } finally {
       setIsCheckingStatus(false);
+    }
+  };
+
+  const checkUserPhoneStatus = async () => {
+    if (!user) return;
+    
+    try {
+      const userId = 10; // You would get this from your user object
+      const phoneStatus = await checkUserPhone(userId);
+      
+      if (phoneStatus.phone_number === 'not-found') {
+        // Show phone verification modal after a short delay
+        setTimeout(() => {
+          setPhoneModalOpen(true);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error checking phone status:', error);
     }
   };
 
@@ -219,6 +240,13 @@ export function RewardsCenter() {
     }
   };
 
+  const handlePhoneVerificationSuccess = () => {
+    toast({
+      title: 'Phone verified!',
+      description: 'You can now earn all available rewards.',
+    });
+  };
+
   if (isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -307,6 +335,13 @@ export function RewardsCenter() {
           platform={selectedPlatform || ''}
           onUpload={handleFileUpload}
           isLoading={isLoading}
+        />
+
+        <PhoneVerificationModal
+          isOpen={phoneModalOpen}
+          onClose={() => setPhoneModalOpen(false)}
+          userId={10}
+          onSuccess={handlePhoneVerificationSuccess}
         />
       </div>
     </div>
