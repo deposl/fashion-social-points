@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Star, Facebook, Instagram } from 'lucide-react';
+import { Check, Star, Facebook, Instagram, ExternalLink } from 'lucide-react';
 
 interface SocialPlatformCardProps {
   platform: 'facebook' | 'instagram' | 'tiktok';
@@ -24,6 +24,12 @@ const platformColors = {
   tiktok: 'bg-gray-900',
 };
 
+const platformUrls = {
+  facebook: 'https://facebook.com/zada',
+  instagram: 'https://instagram.com/zada',
+  tiktok: 'https://tiktok.com/zada',
+};
+
 const platformIcons = {
   facebook: <Facebook className="h-6 w-6" />,
   instagram: <Instagram className="h-6 w-6" />,
@@ -41,6 +47,10 @@ export function SocialPlatformCard({
   onFollowClick, 
   isLoading 
 }: SocialPlatformCardProps) {
+  const handleVisitPage = () => {
+    window.open(platformUrls[platform], '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="bg-white rounded-lg border shadow-sm p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-4">
@@ -70,22 +80,34 @@ export function SocialPlatformCard({
           <span className="font-medium">25 Points (Rs 25)</span>
         </div>
         
-        <Button
-          onClick={onFollowClick}
-          disabled={isCompleted || isLoading}
-          className={`${isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}`}
-        >
-          {isLoading ? (
-            'Processing...'
-          ) : isCompleted ? (
-            <>
-              <Check className="h-4 w-4 mr-2" />
-              Earned
-            </>
-          ) : (
-            'Follow & Earn'
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleVisitPage}
+            className="flex items-center gap-1"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Visit Page
+          </Button>
+          
+          <Button
+            onClick={onFollowClick}
+            disabled={isCompleted || isLoading}
+            className={`${isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}`}
+          >
+            {isLoading ? (
+              'Processing...'
+            ) : isCompleted ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Earned
+              </>
+            ) : (
+              'Follow & Earn'
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
