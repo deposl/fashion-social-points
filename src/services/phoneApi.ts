@@ -86,7 +86,7 @@ export async function sendOTP(phoneNumber: string): Promise<SendOTPResponse> {
     body: JSON.stringify({
       api_token: TEXT_LK_TOKEN,
       recipient: phoneNumber,
-      sender_id: 'YourApp',
+      sender_id: 'TextLKDemo',
       type: 'otp',
       message: `Your verification code is: ${otpCode}. Do not share this code with anyone.`,
     }),
