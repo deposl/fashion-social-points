@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Wallet } from 'lucide-react';
 
 interface User {
   name: string;
@@ -16,6 +16,10 @@ interface RewardsHeaderProps {
 }
 
 export function RewardsHeader({ user, onLogin, onLogout, isLoading }: RewardsHeaderProps) {
+  const handleWalletClick = () => {
+    window.open('https://www.zada.lk/wallet', '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-4xl mx-auto px-4 py-2 md:py-4">
@@ -35,6 +39,17 @@ export function RewardsHeader({ user, onLogin, onLogout, isLoading }: RewardsHea
 
           {/* User Section */}
           <div className="flex items-center gap-2 md:gap-4">
+            {/* Wallet Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleWalletClick}
+              className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3"
+            >
+              <Wallet className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Wallet</span>
+            </Button>
+
             {user ? (
               <>
                 <div className="hidden lg:block text-right">
