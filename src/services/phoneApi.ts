@@ -75,8 +75,6 @@ export async function insertUserPhone(userId: number, phone: string): Promise<vo
 }
 
 export async function sendOTP(phoneNumber: string): Promise<SendOTPResponse> {
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  
   const response = await fetch(TEXT_LK_API, {
     method: 'POST',
     headers: {
@@ -88,7 +86,7 @@ export async function sendOTP(phoneNumber: string): Promise<SendOTPResponse> {
       recipient: phoneNumber,
       sender_id: 'TextLKDemo',
       type: 'otp',
-      message: `Hi Your ZADA.LK OTP is ${otpCode}`,
+      message: 'Hi Your ZADA.LK OTP is {{OTP}}',
     }),
   });
 
@@ -98,9 +96,14 @@ export async function sendOTP(phoneNumber: string): Promise<SendOTPResponse> {
 
   const result = await response.json();
   
-  // Store OTP temporarily (in a real app, you'd use a more secure method)
-  sessionStorage.setItem('otp_code', otpCode);
-  sessionStorage.setItem('otp_phone', phoneNumber);
+  // Check if the API call was successful and extract OTP from response
+  if (result.status === 'success' && result.data && result.data.otp) {
+    // Store OTP from API response
+    sessionStorage.setItem('otp_code', result.data.otp.toString());
+    sessionStorage.setItem('otp_phone', phoneNumber);
+  } else {
+    throw new Error(result.message || 'Failed to send OTP');
+  }
   
   return result;
 }
