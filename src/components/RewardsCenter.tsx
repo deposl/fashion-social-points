@@ -6,6 +6,7 @@ import { SocialPlatformCard } from './SocialPlatformCard';
 import { UploadModal } from './UploadModal';
 import { RewardsSummary } from './RewardsSummary';
 import { RewardsHeader } from './RewardsHeader';
+import { ConfettiAnimation } from './ConfettiAnimation';
 import { useRewards } from '@/hooks/useRewards';
 import { checkLoginStatus, openAuthPopup, logout } from '@/utils/auth';
 import { 
@@ -35,6 +36,7 @@ export function RewardsCenter() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeFromAPI, resetRewards, loadRewardData } = useRewards();
   const { toast } = useToast();
@@ -224,6 +226,10 @@ export function RewardsCenter() {
 
       if (isSuccess) {
         markRewardClaimed(selectedPlatform);
+        
+        // Show confetti animation for social media rewards only
+        setShowConfetti(true);
+        
         const actionText = selectedPlatform === 'youtube' ? 'subscribing to' : 'following';
         toast({
           title: 'Congratulations! 🎉',
@@ -248,6 +254,10 @@ export function RewardsCenter() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleConfettiComplete = () => {
+    setShowConfetti(false);
   };
 
   const handlePhoneVerificationSuccess = () => {
@@ -364,6 +374,11 @@ export function RewardsCenter() {
           onClose={() => setPhoneModalOpen(false)}
           userId={10}
           onSuccess={handlePhoneVerificationSuccess}
+        />
+
+        <ConfettiAnimation 
+          isVisible={showConfetti} 
+          onComplete={handleConfettiComplete} 
         />
       </div>
     </div>
