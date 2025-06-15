@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -31,7 +30,7 @@ export function RewardsCenter() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   
-  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, resetRewards } = useRewards();
+  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, setRewardStatusOnly, resetRewards } = useRewards();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,31 +66,35 @@ export function RewardsCenter() {
       const statusResponse = await checkUserStatus(userId);
       console.log('Status response:', statusResponse);
 
-      // Reset rewards first to ensure clean state
-      resetRewards();
-
       // Check if user has followed/liked any platforms
       if (statusResponse && statusResponse.length > 0) {
+        // Check if response contains empty object
+        if (statusResponse.length === 1 && Object.keys(statusResponse[0]).length === 0) {
+          console.log('User has not followed any pages');
+          return;
+        }
+
         statusResponse.forEach((status) => {
           const actionType = status.action_type?.toLowerCase();
           console.log('Processing action type:', actionType);
           
           if (actionType === 'facebook') {
-            markRewardClaimed('facebook');
-            console.log('Facebook reward claimed automatically');
+            setRewardStatusOnly('facebook');
+            console.log('Facebook reward status set');
           } else if (actionType === 'instagram') {
-            markRewardClaimed('instagram');
-            console.log('Instagram reward claimed automatically');
+            setRewardStatusOnly('instagram');
+            console.log('Instagram reward status set');
           } else if (actionType === 'tiktok') {
-            markRewardClaimed('tiktok');
-            console.log('TikTok reward claimed automatically');
+            setRewardStatusOnly('tiktok');
+            console.log('TikTok reward status set');
           }
         });
+      } else {
+        console.log('No follow status found for user');
       }
 
     } catch (error) {
       console.error('Error checking user follow status:', error);
-      // Don't show error toast for status check as it's not critical
     } finally {
       setIsCheckingStatus(false);
     }
