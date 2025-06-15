@@ -22,6 +22,11 @@ import { PhoneVerificationModal } from './PhoneVerificationModal';
 import { checkUserPhone } from '@/services/phoneApi';
 import { ProductReviewCard } from './ProductReviewCard';
 import { AffiliateCommissionCard } from './AffiliateCommissionCard';
+import { 
+  verifySocialMediaFollow,
+  checkUserVerificationStatus,
+  checkUserPhone
+} from '@/services/supabaseApi';
 
 interface User {
   name: string;
@@ -77,18 +82,11 @@ export function RewardsCenter() {
     
     try {
       console.log('Checking user follow status...');
-      const statusResponse = await checkUserStatus(userId);
+      const statusResponse = await checkUserVerificationStatus(userId);
       console.log('Status response:', statusResponse);
 
       // Always reset and set fresh data
       if (statusResponse && statusResponse.length > 0) {
-        if (statusResponse.length === 1 && Object.keys(statusResponse[0]).length === 0) {
-          console.log('User has not followed any pages');
-          // Clear any cached status
-          resetRewards();
-          return;
-        }
-
         const followedPlatforms = statusResponse
           .map(status => status.action_type)
           .filter(actionType => actionType && typeof actionType === 'string');
@@ -198,33 +196,13 @@ export function RewardsCenter() {
       const requestData = {
         user_id: 10,
         image_url: imageUrl,
+        platform: selectedPlatform
       };
 
-      let response;
-      switch (selectedPlatform) {
-        case 'facebook':
-          response = await verifyFacebookFollow(requestData);
-          break;
-        case 'instagram':
-          response = await verifyInstagramFollow(requestData);
-          break;
-        case 'tiktok':
-          response = await verifyTikTokFollow(requestData);
-          break;
-        case 'youtube':
-          response = await verifyYouTubeFollow(requestData);
-          break;
-      }
-
+      const response = await verifySocialMediaFollow(requestData);
       console.log('Verification response:', response);
 
-      const isSuccess = 
-        (selectedPlatform === 'facebook' && response.facebook_page === 'liked') ||
-        (selectedPlatform === 'instagram' && response.instagram_page === 'followed') ||
-        (selectedPlatform === 'tiktok' && response.tiktok_page === 'followed') ||
-        (selectedPlatform === 'youtube' && response.youtube_page === 'followed');
-
-      if (isSuccess) {
+      if (response.success && response.platform_verified) {
         markRewardClaimed(selectedPlatform);
         
         // Show confetti animation for social media rewards only

@@ -1,11 +1,11 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  'https://storage-supabase.hnxdau.easypanel.host',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE'
-);
+const supabaseUrl = 'https://storage-supabase.hnxdau.easypanel.host';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MVo2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// For file uploads, we'll keep using the storage bucket
 export async function uploadImageToSupabase(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
     throw new Error("Please upload an image file");
@@ -28,7 +28,7 @@ export async function uploadImageToSupabase(file: File): Promise<string> {
   }
 
   // Return the correct public URL format
-  const imageUrl = `https://storage-supabase.hnxdau.easypanel.host/storage/v1/object/public/zada-ai-s3/${fileName}`;
+  const imageUrl = `${supabaseUrl}/storage/v1/object/public/zada-ai-s3/${fileName}`;
   console.log("Image uploaded successfully:", imageUrl);
   
   return imageUrl;
