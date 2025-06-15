@@ -25,22 +25,25 @@ export function useRewards() {
   const [rewardHistory, setRewardHistory] = useState<RewardHistory[]>([]);
   const [totalPoints, setTotalPoints] = useState(0);
 
-  useEffect(() => {
-    loadRewardData();
-  }, []);
-
+  // Don't auto-load on mount - let the parent component control when to load
   const loadRewardData = () => {
+    // Always get fresh data from localStorage, don't cache
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
     if (savedStatus) {
       setRewardStatus(JSON.parse(savedStatus));
+    } else {
+      setRewardStatus({ facebook: false, instagram: false, tiktok: false });
     }
     
     if (savedHistory) {
       const history = JSON.parse(savedHistory);
       setRewardHistory(history);
       setTotalPoints(history.reduce((total: number, reward: RewardHistory) => total + reward.points, 0));
+    } else {
+      setRewardHistory([]);
+      setTotalPoints(0);
     }
   };
 
@@ -69,29 +72,21 @@ export function useRewards() {
     localStorage.setItem('rewardHistory', JSON.stringify(newHistory));
   };
 
-  const updateStatusFromAPI = (followedPlatforms: string[]) => {
-    // Only update status, don't add to history - this is for API status checks
-    const currentStatus = { ...rewardStatus };
-    let hasChanges = false;
-
-    followedPlatforms.forEach(platform => {
-      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok';
-      if (!currentStatus[platformKey]) {
-        currentStatus[platformKey] = true;
-        hasChanges = true;
-      }
-    });
-
-    if (hasChanges) {
-      setRewardStatus(currentStatus);
-      localStorage.setItem('rewardStatus', JSON.stringify(currentStatus));
-    }
+  const setRewardStatusOnly = (platform: 'facebook' | 'instagram' | 'tiktok') => {
+    // Only update status without adding to history
+    const newStatus = { ...rewardStatus, [platform]: true };
+    setRewardStatus(newStatus);
+    localStorage.setItem('rewardStatus', JSON.stringify(newStatus));
   };
 
-  const initializeRewardsFromAPI = (followedPlatforms: string[]) => {
-    // Initialize both status and history for users who already have followed pages
-    const currentStatus = { ...rewardStatus };
-    const currentHistory = [...rewardHistory];
+  const initializeFromAPI = (followedPlatforms: string[]) => {
+    // Always get fresh data from localStorage first
+    const savedStatus = localStorage.getItem('rewardStatus');
+    const savedHistory = localStorage.getItem('rewardHistory');
+    
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false };
+    const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+    
     let statusChanged = false;
     let historyChanged = false;
     let pointsToAdd = 0;
@@ -105,7 +100,7 @@ export function useRewards() {
         statusChanged = true;
 
         // Add to history if not already present
-        const existingReward = currentHistory.find(reward => reward.platform === platformKey);
+        const existingReward = currentHistory.find((reward: RewardHistory) => reward.platform === platformKey);
         if (!existingReward) {
           const newReward: RewardHistory = {
             id: Date.now().toString() + platformKey,
@@ -128,8 +123,12 @@ export function useRewards() {
 
     if (historyChanged) {
       setRewardHistory(currentHistory);
-      setTotalPoints(prev => prev + pointsToAdd);
+      setTotalPoints(currentHistory.reduce((total: number, reward: RewardHistory) => total + reward.points, 0));
       localStorage.setItem('rewardHistory', JSON.stringify(currentHistory));
+    } else {
+      // Update totals even if no new history
+      setRewardHistory(currentHistory);
+      setTotalPoints(currentHistory.reduce((total: number, reward: RewardHistory) => total + reward.points, 0));
     }
   };
 
@@ -141,13 +140,20 @@ export function useRewards() {
     localStorage.removeItem('rewardHistory');
   };
 
+  const refreshData = () => {
+    // Force refresh from localStorage
+    loadRewardData();
+  };
+
   return {
     rewardStatus,
     rewardHistory,
     totalPoints,
     markRewardClaimed,
-    updateStatusFromAPI,
-    initializeRewardsFromAPI,
+    setRewardStatusOnly,
+    initializeFromAPI,
     resetRewards,
+    loadRewardData,
+    refreshData,
   };
 }

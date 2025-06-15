@@ -31,10 +31,12 @@ export function RewardsCenter() {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusChecked, setStatusChecked] = useState(false);
   
-  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeRewardsFromAPI, resetRewards } = useRewards();
+  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeFromAPI, resetRewards, loadRewardData } = useRewards();
   const { toast } = useToast();
 
   useEffect(() => {
+    // Always load fresh data on mount
+    loadRewardData();
     checkUserLoginStatus();
   }, []);
 
@@ -67,25 +69,21 @@ export function RewardsCenter() {
       const statusResponse = await checkUserStatus(userId);
       console.log('Status response:', statusResponse);
 
-      // Check if user has followed/liked any platforms
       if (statusResponse && statusResponse.length > 0) {
-        // Check if response contains empty object
         if (statusResponse.length === 1 && Object.keys(statusResponse[0]).length === 0) {
           console.log('User has not followed any pages');
           setStatusChecked(true);
           return;
         }
 
-        // Extract all followed platforms at once
         const followedPlatforms = statusResponse
           .map(status => status.action_type)
           .filter(actionType => actionType && typeof actionType === 'string');
 
         console.log('Followed platforms:', followedPlatforms);
 
-        // Initialize rewards for all followed platforms at once
         if (followedPlatforms.length > 0) {
-          initializeRewardsFromAPI(followedPlatforms);
+          initializeFromAPI(followedPlatforms);
         }
       } else {
         console.log('No follow status found for user');
@@ -235,19 +233,19 @@ export function RewardsCenter() {
         isLoading={isLoading} 
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
         {/* Login Prompt for Non-Authenticated Users */}
         {!user && (
-          <Card className="p-6 bg-blue-50 border-blue-200 mb-8">
+          <Card className="p-4 md:p-6 bg-blue-50 border-blue-200 mb-6 md:mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <User className="h-8 w-8 text-blue-600" />
+                <User className="h-6 w-6 md:h-8 md:w-8 text-blue-600" />
                 <div>
-                  <h3 className="font-semibold text-blue-900">Login Required</h3>
-                  <p className="text-blue-700">Please login to start earning rewards</p>
+                  <h3 className="font-semibold text-blue-900 text-sm md:text-base">Login Required</h3>
+                  <p className="text-blue-700 text-xs md:text-sm">Please login to start earning rewards</p>
                 </div>
               </div>
-              <Button onClick={handleLogin} disabled={isLoading}>
+              <Button onClick={handleLogin} disabled={isLoading} size="sm">
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
@@ -256,21 +254,21 @@ export function RewardsCenter() {
 
         {/* Rewards Summary */}
         {user && (
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <RewardsSummary totalPoints={totalPoints} rewardHistory={rewardHistory} />
           </div>
         )}
 
         {/* Social Platform Cards */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">Available Rewards</h2>
+            <h2 className="text-lg md:text-xl font-semibold">Available Rewards</h2>
             {isCheckingStatus && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
             )}
           </div>
           
-          <div className="grid gap-6">
+          <div className="grid gap-4 md:gap-6">
             <SocialPlatformCard
               platform="facebook"
               icon={<span className="font-bold">f</span>}
