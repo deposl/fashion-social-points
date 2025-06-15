@@ -88,7 +88,7 @@ export async function sendOTP(phoneNumber: string): Promise<SendOTPResponse> {
       recipient: phoneNumber,
       sender_id: 'TextLKDemo',
       type: 'otp',
-      message: `Your verification code is: ${otpCode}. Do not share this code with anyone.`,
+      message: `Hi Your ZADA.LK OTP is ${otpCode}`,
     }),
   });
 
