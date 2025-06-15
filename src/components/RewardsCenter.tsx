@@ -19,6 +19,7 @@ import { uploadImageToSupabase } from '@/utils/supabase';
 import { User } from 'lucide-react';
 import { PhoneVerificationModal } from './PhoneVerificationModal';
 import { checkUserPhone } from '@/services/phoneApi';
+import { ProductReviewCard } from './ProductReviewCard';
 
 interface User {
   name: string;
@@ -165,7 +166,7 @@ export function RewardsCenter() {
     });
   };
 
-  const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube') => {
+  const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'product_review') => {
     if (!user) {
       handleLogin();
       return;
@@ -174,7 +175,17 @@ export function RewardsCenter() {
     if (rewardStatus[platform]) {
       toast({
         title: 'Already earned',
-        description: `You have already earned rewards for ${platform}.`,
+        description: `You have already earned rewards for ${platform === 'product_review' ? 'product review' : platform}.`,
+      });
+      return;
+    }
+
+    // For product review, we don't need upload modal - just mark as claimed for demo
+    if (platform === 'product_review') {
+      markRewardClaimed(platform);
+      toast({
+        title: 'Congratulations! 🎉',
+        description: 'You\'ve earned 15 points (Rs 15) for reviewing products!',
       });
       return;
     }
@@ -338,6 +349,12 @@ export function RewardsCenter() {
               isCompleted={rewardStatus.youtube}
               onFollowClick={() => handleFollowClick('youtube')}
               isLoading={isLoading && selectedPlatform === 'youtube'}
+            />
+
+            <ProductReviewCard
+              isCompleted={rewardStatus.product_review}
+              onReviewClick={() => handleFollowClick('product_review')}
+              isLoading={isLoading && selectedPlatform === 'product_review'}
             />
           </div>
         </div>

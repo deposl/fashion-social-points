@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 export interface RewardHistory {
   id: string;
-  platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube';
+  platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'product_review';
   points: number;
   value: number;
   earnedAt: Date;
@@ -14,6 +14,7 @@ export interface RewardStatus {
   instagram: boolean;
   tiktok: boolean;
   youtube: boolean;
+  product_review: boolean;
 }
 
 export function useRewards() {
@@ -22,6 +23,7 @@ export function useRewards() {
     instagram: false,
     tiktok: false,
     youtube: false,
+    product_review: false,
   });
   
   const [rewardHistory, setRewardHistory] = useState<RewardHistory[]>([]);
@@ -32,7 +34,13 @@ export function useRewards() {
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
-    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false, youtube: false };
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { 
+      facebook: false, 
+      instagram: false, 
+      tiktok: false, 
+      youtube: false,
+      product_review: false
+    };
     const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
     
     setRewardStatus(currentStatus);
@@ -40,12 +48,18 @@ export function useRewards() {
     setTotalPoints(currentHistory.reduce((total: number, reward: RewardHistory) => total + reward.points, 0));
   };
 
-  const markRewardClaimed = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube') => {
+  const markRewardClaimed = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'product_review') => {
     // Get fresh data from localStorage first
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
-    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false, youtube: false };
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { 
+      facebook: false, 
+      instagram: false, 
+      tiktok: false, 
+      youtube: false,
+      product_review: false
+    };
     const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
 
     // Check if reward is already claimed
@@ -54,11 +68,12 @@ export function useRewards() {
     }
 
     const newStatus = { ...currentStatus, [platform]: true };
+    const rewardPoints = platform === 'product_review' ? 15 : 25;
     const newReward: RewardHistory = {
       id: Date.now().toString(),
       platform,
-      points: 25,
-      value: 25,
+      points: rewardPoints,
+      value: rewardPoints,
       earnedAt: new Date(),
     };
     
@@ -77,17 +92,29 @@ export function useRewards() {
     const savedStatus = localStorage.getItem('rewardStatus');
     const savedHistory = localStorage.getItem('rewardHistory');
     
-    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { facebook: false, instagram: false, tiktok: false, youtube: false };
+    const currentStatus = savedStatus ? JSON.parse(savedStatus) : { 
+      facebook: false, 
+      instagram: false, 
+      tiktok: false, 
+      youtube: false,
+      product_review: false
+    };
     const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
     
     let statusChanged = false;
     let historyChanged = false;
 
     // Reset status first to ensure clean state
-    const newStatus = { facebook: false, instagram: false, tiktok: false, youtube: false };
+    const newStatus = { 
+      facebook: false, 
+      instagram: false, 
+      tiktok: false, 
+      youtube: false,
+      product_review: false
+    };
     
     followedPlatforms.forEach(platform => {
-      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok' | 'youtube';
+      const platformKey = platform.toLowerCase() as 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'product_review';
       
       // Mark as followed
       newStatus[platformKey] = true;
@@ -96,11 +123,12 @@ export function useRewards() {
       // Add to history only if not already present
       const existingReward = currentHistory.find((reward: RewardHistory) => reward.platform === platformKey);
       if (!existingReward) {
+        const rewardPoints = platformKey === 'product_review' ? 15 : 25;
         const newReward: RewardHistory = {
           id: Date.now().toString() + platformKey,
           platform: platformKey,
-          points: 25,
-          value: 25,
+          points: rewardPoints,
+          value: rewardPoints,
           earnedAt: new Date(),
         };
         currentHistory.push(newReward);
@@ -121,7 +149,13 @@ export function useRewards() {
   };
 
   const resetRewards = () => {
-    setRewardStatus({ facebook: false, instagram: false, tiktok: false, youtube: false });
+    setRewardStatus({ 
+      facebook: false, 
+      instagram: false, 
+      tiktok: false, 
+      youtube: false,
+      product_review: false
+    });
     setRewardHistory([]);
     setTotalPoints(0);
     localStorage.removeItem('rewardStatus');
