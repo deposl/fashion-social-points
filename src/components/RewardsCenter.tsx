@@ -6,11 +6,19 @@ import { useToast } from '@/hooks/use-toast';
 import { SocialPlatformCard } from './SocialPlatformCard';
 import { UploadModal } from './UploadModal';
 import { RewardsSummary } from './RewardsSummary';
+import { RewardsHeader } from './RewardsHeader';
 import { useRewards } from '@/hooks/useRewards';
 import { checkLoginStatus, openAuthPopup, logout } from '@/utils/auth';
-import { verifyFacebookFollow, verifyInstagramFollow, verifyTikTokFollow, checkUserFollowStatus } from '@/services/rewardsApi';
+import { 
+  verifyFacebookFollow, 
+  verifyInstagramFollow, 
+  verifyTikTokFollow,
+  checkFacebookStatus,
+  checkInstagramStatus,
+  checkTikTokStatus
+} from '@/services/rewardsApi';
 import { uploadImageToSupabase } from '@/utils/supabase';
-import { User, LogOut } from 'lucide-react';
+import { User } from 'lucide-react';
 
 interface User {
   name: string;
@@ -25,7 +33,7 @@ export function RewardsCenter() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   
-  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed } = useRewards();
+  const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, resetRewards } = useRewards();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,7 +42,7 @@ export function RewardsCenter() {
 
   useEffect(() => {
     if (user) {
-      checkFollowStatus();
+      checkAllPlatformStatus();
     }
   }, [user]);
 
@@ -50,25 +58,46 @@ export function RewardsCenter() {
     }
   };
 
-  const checkFollowStatus = async () => {
+  const checkAllPlatformStatus = async () => {
     if (!user) return;
     
     setIsCheckingStatus(true);
+    const userId = 10; // You would get this from your user object
+    
     try {
-      const statusResponse = await checkUserFollowStatus(10); // You would get this from your user object
-      
-      // Check if user has already followed/liked any platforms
-      if (statusResponse.facebook_page === 'liked' && !rewardStatus.facebook) {
+      // Check each platform individually
+      const [facebookResponse, instagramResponse, tiktokResponse] = await Promise.allSettled([
+        checkFacebookStatus(userId),
+        checkInstagramStatus(userId),
+        checkTikTokStatus(userId)
+      ]);
+
+      // Process Facebook status
+      if (facebookResponse.status === 'fulfilled' && 
+          facebookResponse.value.facebook_page === 'liked' && 
+          !rewardStatus.facebook) {
         markRewardClaimed('facebook');
+        console.log('Facebook reward claimed automatically');
       }
-      if (statusResponse.instagram_page === 'followed' && !rewardStatus.instagram) {
+
+      // Process Instagram status
+      if (instagramResponse.status === 'fulfilled' && 
+          instagramResponse.value.instagram_page === 'followed' && 
+          !rewardStatus.instagram) {
         markRewardClaimed('instagram');
+        console.log('Instagram reward claimed automatically');
       }
-      if (statusResponse.tiktok_page === 'followed' && !rewardStatus.tiktok) {
+
+      // Process TikTok status
+      if (tiktokResponse.status === 'fulfilled' && 
+          tiktokResponse.value.tiktok_page === 'followed' && 
+          !rewardStatus.tiktok) {
         markRewardClaimed('tiktok');
+        console.log('TikTok reward claimed automatically');
       }
+
     } catch (error) {
-      console.error('Error checking follow status:', error);
+      console.error('Error checking platform status:', error);
       // Don't show error toast for status check as it's not critical
     } finally {
       setIsCheckingStatus(false);
@@ -101,6 +130,8 @@ export function RewardsCenter() {
   const handleLogout = () => {
     logout();
     setUser(null);
+    // Reset rewards when user logs out
+    resetRewards();
     toast({
       title: 'Logged out',
       description: 'You have been successfully logged out.',
@@ -184,7 +215,7 @@ export function RewardsCenter() {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p>Loading...</p>
@@ -194,49 +225,33 @@ export function RewardsCenter() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Rewards Center</h1>
-              <p className="text-gray-600 mt-2">
-                Follow our social media pages and earn points worth real money!
-              </p>
-            </div>
-            
-            {user && (
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Welcome back,</p>
-                  <p className="font-medium">{user.name}</p>
-                </div>
-                <Button variant="outline" onClick={handleLogout} size="sm">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <RewardsHeader 
+        user={user} 
+        onLogin={handleLogin} 
+        onLogout={handleLogout} 
+        isLoading={isLoading} 
+      />
 
-          {!user && (
-            <Card className="p-6 bg-blue-50 border-blue-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <User className="h-8 w-8 text-blue-600" />
-                  <div>
-                    <h3 className="font-semibold text-blue-900">Login Required</h3>
-                    <p className="text-blue-700">Please login to start earning rewards</p>
-                  </div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Login Prompt for Non-Authenticated Users */}
+        {!user && (
+          <Card className="p-6 bg-blue-50 border-blue-200 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <User className="h-8 w-8 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-blue-900">Login Required</h3>
+                  <p className="text-blue-700">Please login to start earning rewards</p>
                 </div>
-                <Button onClick={handleLogin} disabled={isLoading}>
-                  {isLoading ? 'Logging in...' : 'Login'}
-                </Button>
               </div>
-            </Card>
-          )}
-        </div>
+              <Button onClick={handleLogin} disabled={isLoading}>
+                {isLoading ? 'Logging in...' : 'Login'}
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Rewards Summary */}
         {user && (

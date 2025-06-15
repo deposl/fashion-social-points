@@ -34,6 +34,57 @@ export async function checkUserFollowStatus(userId: number): Promise<Verificatio
   return response.json();
 }
 
+export async function checkFacebookStatus(userId: number): Promise<VerificationResponse> {
+  const response = await fetch(`${API_BASE}/facebook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Auth': AUTH_HEADER,
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to check Facebook status');
+  }
+
+  return response.json();
+}
+
+export async function checkInstagramStatus(userId: number): Promise<VerificationResponse> {
+  const response = await fetch(`${API_BASE}/instagram`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Auth': AUTH_HEADER,
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to check Instagram status');
+  }
+
+  return response.json();
+}
+
+export async function checkTikTokStatus(userId: number): Promise<VerificationResponse> {
+  const response = await fetch(`${API_BASE}/tiktok`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Auth': AUTH_HEADER,
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to check TikTok status');
+  }
+
+  return response.json();
+}
+
 export async function verifyFacebookFollow(data: VerificationRequest): Promise<VerificationResponse> {
   const response = await fetch(`${API_BASE}/facebook`, {
     method: 'POST',
