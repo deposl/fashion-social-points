@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -166,7 +167,7 @@ export function RewardsCenter() {
     });
   };
 
-  const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'product_review') => {
+  const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube') => {
     if (!user) {
       handleLogin();
       return;
@@ -175,17 +176,7 @@ export function RewardsCenter() {
     if (rewardStatus[platform]) {
       toast({
         title: 'Already earned',
-        description: `You have already earned rewards for ${platform === 'product_review' ? 'product review' : platform}.`,
-      });
-      return;
-    }
-
-    // For product review, we don't need upload modal - just mark as claimed for demo
-    if (platform === 'product_review') {
-      markRewardClaimed(platform);
-      toast({
-        title: 'Congratulations! 🎉',
-        description: 'You\'ve earned 15 points (Rs 15) for reviewing products!',
+        description: `You have already earned rewards for ${platform}.`,
       });
       return;
     }
@@ -351,11 +342,7 @@ export function RewardsCenter() {
               isLoading={isLoading && selectedPlatform === 'youtube'}
             />
 
-            <ProductReviewCard
-              isCompleted={rewardStatus.product_review}
-              onReviewClick={() => handleFollowClick('product_review')}
-              isLoading={isLoading && selectedPlatform === 'product_review'}
-            />
+            <ProductReviewCard />
           </div>
         </div>
 
