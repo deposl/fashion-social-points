@@ -1,4 +1,3 @@
-
 export interface CheckPhoneRequest {
   user_id: number;
 }
@@ -28,7 +27,7 @@ export interface SendOTPResponse {
 const API_BASE = 'https://n8n-n8n.hnxdau.easypanel.host/webhook';
 const AUTH_HEADER = 'Manoj';
 const TEXT_LK_API = 'https://app.text.lk/api/http/sms/send';
-const TEXT_LK_TOKEN = '800|edUcwE7TFH3BoJXcxHyHR8BAtMngyn4J8nqszkyD279bac62'; // You should move this to environment variables
+const TEXT_LK_TOKEN = '800|edUcwE7TFH3BoJXcxHyHR8BAtMngyn4J8nqszkyD279bac62';
 
 export async function checkUserPhone(userId: number): Promise<CheckPhoneResponse> {
   const response = await fetch(`${API_BASE}/check-phone`, {
@@ -45,7 +44,19 @@ export async function checkUserPhone(userId: number): Promise<CheckPhoneResponse
   }
 
   const data = await response.json();
-  return data[0]; // API returns array with single object
+  console.log('Phone check API response:', data);
+  
+  // Handle the actual API response format: [{"phone_number":"not found"}] or [{"phone_number":"found"}]
+  if (data && data.length > 0) {
+    const phoneStatus = data[0].phone_number;
+    // Normalize the response - API returns "not found" but we expect "not-found"
+    return {
+      phone_number: phoneStatus === 'not found' ? 'not-found' : 'found'
+    };
+  }
+  
+  // Default to not-found if response is unexpected
+  return { phone_number: 'not-found' };
 }
 
 export async function insertUserPhone(userId: number, phone: string): Promise<void> {
