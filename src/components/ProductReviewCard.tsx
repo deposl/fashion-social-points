@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, ShoppingBag } from 'lucide-react';
+import { ExternalLink, ShoppingBag, Star } from 'lucide-react';
 
 export function ProductReviewCard() {
   const handleVisitPurchaseHistory = () => {
@@ -24,7 +24,12 @@ export function ProductReviewCard() {
         </div>
       </div>
 
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 text-sm text-orange-600">
+          <Star className="h-4 w-4" />
+          <span className="font-medium">15 Points (Rs 15)</span>
+        </div>
+        
         <Button
           variant="outline"
           size="sm"
