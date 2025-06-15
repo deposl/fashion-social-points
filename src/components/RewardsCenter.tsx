@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -29,22 +30,24 @@ export function RewardsCenter() {
   const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'instagram' | 'tiktok' | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [statusChecked, setStatusChecked] = useState(false);
   
   const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeFromAPI, resetRewards, loadRewardData } = useRewards();
   const { toast } = useToast();
 
+  // Always check user status fresh on mount and user change
   useEffect(() => {
-    // Always load fresh data on mount
-    loadRewardData();
     checkUserLoginStatus();
   }, []);
 
   useEffect(() => {
-    if (user && !statusChecked) {
+    if (user) {
+      // Always check fresh status when user is available
       checkUserFollowStatus();
+    } else {
+      // Load local data when no user
+      loadRewardData();
     }
-  }, [user, statusChecked]);
+  }, [user]);
 
   const checkUserLoginStatus = async () => {
     setIsAuthLoading(true);
@@ -69,10 +72,12 @@ export function RewardsCenter() {
       const statusResponse = await checkUserStatus(userId);
       console.log('Status response:', statusResponse);
 
+      // Always reset and set fresh data
       if (statusResponse && statusResponse.length > 0) {
         if (statusResponse.length === 1 && Object.keys(statusResponse[0]).length === 0) {
           console.log('User has not followed any pages');
-          setStatusChecked(true);
+          // Clear any cached status
+          resetRewards();
           return;
         }
 
@@ -83,17 +88,22 @@ export function RewardsCenter() {
         console.log('Followed platforms:', followedPlatforms);
 
         if (followedPlatforms.length > 0) {
+          // Always initialize from fresh API data
           initializeFromAPI(followedPlatforms);
+        } else {
+          // Clear if no platforms followed
+          resetRewards();
         }
       } else {
         console.log('No follow status found for user');
+        // Clear any cached status
+        resetRewards();
       }
-
-      setStatusChecked(true);
 
     } catch (error) {
       console.error('Error checking user follow status:', error);
-      setStatusChecked(true);
+      // Load local data as fallback but don't cache the error
+      loadRewardData();
     } finally {
       setIsCheckingStatus(false);
     }
@@ -105,11 +115,11 @@ export function RewardsCenter() {
       const loggedInUser = await openAuthPopup();
       if (loggedInUser) {
         setUser(loggedInUser);
-        setStatusChecked(false); // Reset status check for new user
         toast({
           title: 'Login successful!',
           description: `Welcome ${loggedInUser.name}! You can now earn rewards.`,
         });
+        // Status will be checked via useEffect when user changes
       }
     } catch (error) {
       console.error('Login failed:', error);
@@ -126,8 +136,6 @@ export function RewardsCenter() {
   const handleLogout = () => {
     logout();
     setUser(null);
-    setStatusChecked(false);
-    // Reset rewards when user logs out
     resetRewards();
     toast({
       title: 'Logged out',
@@ -158,12 +166,11 @@ export function RewardsCenter() {
 
     setIsLoading(true);
     try {
-      // Upload image to Supabase and get the URL
       const imageUrl = await uploadImageToSupabase(file);
       console.log("Uploaded image URL:", imageUrl);
       
       const requestData = {
-        user_id: 10, // You would get this from your user object
+        user_id: 10,
         image_url: imageUrl,
       };
 
@@ -225,7 +232,6 @@ export function RewardsCenter() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <RewardsHeader 
         user={user} 
         onLogin={handleLogin} 
@@ -234,7 +240,6 @@ export function RewardsCenter() {
       />
 
       <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
-        {/* Login Prompt for Non-Authenticated Users */}
         {!user && (
           <Card className="p-4 md:p-6 bg-blue-50 border-blue-200 mb-6 md:mb-8">
             <div className="flex items-center justify-between">
@@ -252,14 +257,12 @@ export function RewardsCenter() {
           </Card>
         )}
 
-        {/* Rewards Summary */}
         {user && (
           <div className="mb-6 md:mb-8">
             <RewardsSummary totalPoints={totalPoints} rewardHistory={rewardHistory} />
           </div>
         )}
 
-        {/* Social Platform Cards */}
         <div className="space-y-4 md:space-y-6">
           <div className="flex items-center gap-2">
             <h2 className="text-lg md:text-xl font-semibold">Available Rewards</h2>
@@ -295,7 +298,6 @@ export function RewardsCenter() {
           </div>
         </div>
 
-        {/* Upload Modal */}
         <UploadModal
           isOpen={uploadModalOpen}
           onClose={() => {
