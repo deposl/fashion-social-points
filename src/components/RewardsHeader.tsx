@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, User, Wallet } from 'lucide-react';
 
 interface User {
+  id: number;
   name: string;
   email: string;
 }

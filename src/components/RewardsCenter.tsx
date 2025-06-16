@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,7 @@ import { ProductReviewCard } from './ProductReviewCard';
 import { AffiliateCommissionCard } from './AffiliateCommissionCard';
 
 interface User {
+  id: number;
   name: string;
   email: string;
 }
@@ -62,6 +64,7 @@ export function RewardsCenter() {
     try {
       const loggedInUser = await checkLoginStatus();
       setUser(loggedInUser);
+      console.log('Logged in user:', loggedInUser);
     } catch (error) {
       console.error('Error checking login status:', error);
     } finally {
@@ -73,10 +76,10 @@ export function RewardsCenter() {
     if (!user) return;
     
     setIsCheckingStatus(true);
-    const userId = 10; // You would get this from your user object
+    const userId = user.id; // Use actual user ID
     
     try {
-      console.log('Checking user follow status...');
+      console.log('Checking user follow status for user ID:', userId);
       const statusResponse = await checkUserStatus(userId);
       console.log('Status response:', statusResponse);
 
@@ -121,7 +124,8 @@ export function RewardsCenter() {
     if (!user) return;
     
     try {
-      const userId = 10; // You would get this from your user object
+      const userId = user.id; // Use actual user ID
+      console.log('Checking phone status for user ID:', userId);
       const phoneStatus = await checkUserPhone(userId);
       
       if (phoneStatus.phone_number === 'not-found') {
@@ -141,6 +145,7 @@ export function RewardsCenter() {
       const loggedInUser = await openAuthPopup();
       if (loggedInUser) {
         setUser(loggedInUser);
+        console.log('User logged in:', loggedInUser);
         toast({
           title: 'Login successful!',
           description: `Welcome ${loggedInUser.name}! You can now earn rewards.`,
@@ -196,9 +201,11 @@ export function RewardsCenter() {
       console.log("Uploaded image URL:", imageUrl);
       
       const requestData = {
-        user_id: 10,
+        user_id: user.id, // Use actual user ID
         image_url: imageUrl,
       };
+
+      console.log('Sending verification request with user ID:', user.id);
 
       let response;
       switch (selectedPlatform) {
@@ -372,7 +379,7 @@ export function RewardsCenter() {
         <PhoneVerificationModal
           isOpen={phoneModalOpen}
           onClose={() => setPhoneModalOpen(false)}
-          userId={10}
+          userId={user?.id || 0}
           onSuccess={handlePhoneVerificationSuccess}
         />
 

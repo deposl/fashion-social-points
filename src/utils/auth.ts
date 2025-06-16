@@ -11,7 +11,7 @@ function getCurrentDomain(): string {
   return window.location.origin;
 }
 
-export function openAuthPopup(): Promise<{name: string, email: string} | null> {
+export function openAuthPopup(): Promise<{id: number, name: string, email: string} | null> {
   return new Promise((resolve) => {
     console.log('Button clicked');
     const token = generateUniqueToken();
@@ -53,8 +53,15 @@ export function openAuthPopup(): Promise<{name: string, email: string} | null> {
         if (user && user.name && user.email) {
           console.log('User authenticated:', user);
 
+          // Create user object with ID (use user.id if available, otherwise generate one)
+          const userWithId = {
+            id: user.id || Date.now(), // Use actual ID or timestamp as fallback
+            name: user.name,
+            email: user.email
+          };
+
           // Store user in localStorage
-          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('user', JSON.stringify(userWithId));
           localStorage.setItem('loginTimestamp', Date.now().toString());
 
           // Clean up listeners and intervals
@@ -62,7 +69,7 @@ export function openAuthPopup(): Promise<{name: string, email: string} | null> {
           clearInterval(checkPopupClosedInterval); 
           clearTimeout(timeoutId); 
 
-          resolve(user);
+          resolve(userWithId);
           return;
         }
       } else if (status === 'error') {
@@ -110,7 +117,7 @@ export function openAuthPopup(): Promise<{name: string, email: string} | null> {
   });
 }
 
-export function checkLoginStatus(): Promise<{name: string, email: string} | null> {
+export function checkLoginStatus(): Promise<{id: number, name: string, email: string} | null> {
   return new Promise((resolve) => {
     const storedUser = localStorage.getItem('user');
     const loginTimestamp = localStorage.getItem('loginTimestamp');
@@ -118,6 +125,14 @@ export function checkLoginStatus(): Promise<{name: string, email: string} | null
     if (!storedUser || !loginTimestamp) {
       resolve(null);
       return;
+    }
+
+    const parsedUser = JSON.parse(storedUser);
+    
+    // Ensure user object has ID (for backward compatibility)
+    if (!parsedUser.id) {
+      parsedUser.id = Date.now(); // Generate ID if missing
+      localStorage.setItem('user', JSON.stringify(parsedUser));
     }
 
     const currentTime = Date.now();
@@ -132,7 +147,7 @@ export function checkLoginStatus(): Promise<{name: string, email: string} | null
       const popup = window.open(authUrl, 'authCheckPopup', 'width=1,height=1');
       if (!popup) {
         localStorage.setItem('loginTimestamp', currentTime.toString());
-        resolve(JSON.parse(storedUser));
+        resolve(parsedUser);
         return;
       }
 
@@ -147,13 +162,13 @@ export function checkLoginStatus(): Promise<{name: string, email: string} | null
           } else if (popup.closed) {
             clearInterval(checkRedirectInterval);
             localStorage.setItem('loginTimestamp', currentTime.toString());
-            resolve(JSON.parse(storedUser));
+            resolve(parsedUser);
           }
         } catch (e) {
           clearInterval(checkRedirectInterval);
           if (popup && !popup.closed) popup.close();
           localStorage.setItem('loginTimestamp', currentTime.toString());
-          resolve(JSON.parse(storedUser));
+          resolve(parsedUser);
         }
       }, 500);
 
@@ -161,10 +176,10 @@ export function checkLoginStatus(): Promise<{name: string, email: string} | null
         clearInterval(checkRedirectInterval);
         if (popup && !popup.closed) popup.close();
         localStorage.setItem('loginTimestamp', currentTime.toString());
-        resolve(JSON.parse(storedUser));
+        resolve(parsedUser);
       }, 5000);
     } else {
-      resolve(JSON.parse(storedUser));
+      resolve(parsedUser);
     }
   });
 }
