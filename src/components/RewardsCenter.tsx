@@ -39,6 +39,7 @@ export function RewardsCenter() {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   
   const { rewardStatus, rewardHistory, totalPoints, markRewardClaimed, initializeFromAPI, resetRewards, loadRewardData } = useRewards();
   const { toast } = useToast();
@@ -76,7 +77,7 @@ export function RewardsCenter() {
     if (!user) return;
     
     setIsCheckingStatus(true);
-    const userId = user.id; // Use actual user ID
+    const userId = user.id;
     
     try {
       console.log('Checking user follow status for user ID:', userId);
@@ -124,18 +125,22 @@ export function RewardsCenter() {
     if (!user) return;
     
     try {
-      const userId = user.id; // Use actual user ID
+      const userId = user.id;
       console.log('Checking phone status for user ID:', userId);
       const phoneStatus = await checkUserPhone(userId);
       
       if (phoneStatus.phone_number === 'not-found') {
+        setIsPhoneVerified(false);
         // Show phone verification modal after a short delay
         setTimeout(() => {
           setPhoneModalOpen(true);
         }, 1000);
+      } else {
+        setIsPhoneVerified(true);
       }
     } catch (error) {
       console.error('Error checking phone status:', error);
+      setIsPhoneVerified(false);
     }
   };
 
@@ -167,6 +172,7 @@ export function RewardsCenter() {
   const handleLogout = () => {
     logout();
     setUser(null);
+    setIsPhoneVerified(false);
     resetRewards();
     toast({
       title: 'Logged out',
@@ -177,6 +183,17 @@ export function RewardsCenter() {
   const handleFollowClick = (platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube') => {
     if (!user) {
       handleLogin();
+      return;
+    }
+
+    // Check if phone is verified before allowing to proceed
+    if (!isPhoneVerified) {
+      setPhoneModalOpen(true);
+      toast({
+        title: 'Phone verification required',
+        description: 'Please verify your phone number before earning rewards.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -268,6 +285,7 @@ export function RewardsCenter() {
   };
 
   const handlePhoneVerificationSuccess = () => {
+    setIsPhoneVerified(true);
     toast({
       title: 'Phone verified!',
       description: 'You can now earn all available rewards.',
@@ -307,6 +325,23 @@ export function RewardsCenter() {
               </div>
               <Button onClick={handleLogin} disabled={isLoading} size="sm">
                 {isLoading ? 'Logging in...' : 'Login'}
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {user && !isPhoneVerified && (
+          <Card className="p-4 md:p-6 bg-orange-50 border-orange-200 mb-6 md:mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <User className="h-6 w-6 md:h-8 md:w-8 text-orange-600" />
+                <div>
+                  <h3 className="font-semibold text-orange-900 text-sm md:text-base">Phone Verification Required</h3>
+                  <p className="text-orange-700 text-xs md:text-sm">Please verify your phone number to earn rewards</p>
+                </div>
+              </div>
+              <Button onClick={() => setPhoneModalOpen(true)} size="sm" className="bg-orange-600 hover:bg-orange-700">
+                Verify Phone
               </Button>
             </div>
           </Card>
